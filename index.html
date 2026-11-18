@@ -815,6 +815,67 @@ function toFIT(s){
  return all;
 }
 
+/* =====================================================================
+   INTERVALS.ICU: enviar entrenos planificados (intervals.icu -> Garmin Connect -> Edge)
+   ===================================================================== */
+const ICU_KEY='pc_icu_cfg';
+function icuCfg(){try{return JSON.parse(localStorage.getItem(ICU_KEY)||'{}')||{};}catch(e){return{};}}
+function icuSave(c){try{localStorage.setItem(ICU_KEY,JSON.stringify(c));}catch(e){}}
+function icuHdr(key){return{'Authorization':'Basic '+btoa('API_KEY:'+key),'Content-Type':'application/json'};}
+function icuDur(sec){sec=Math.max(1,Math.round(sec));const m=Math.floor(sec/60),r=sec%60;return m?(r?m+'m'+r+'s':m+'m'):r+'s';}
+/* entreno -> texto de intervals.icu (vatios absolutos con tu FTP; las rampas se parten en escalones) */
+function toICUText(s,ftp){
+ const w=p=>Math.round(p*ftp),L=[];
+ const line=(d,p,c)=>'- '+icuDur(d)+' '+w(p)+'w'+(c?' '+c+'rpm':'');
+ (s.segs||[]).forEach(x=>{
+  if(x.t==='s')L.push(line(x.d,x.p,x.c));
+  else if(x.t==='r'){
+   const k=clamp(Math.round(x.d/120),2,6);
+   for(let j=0;j<k;j++){const a=x.p+(x.p2-x.p)*(j+.5)/k;L.push(line(x.d/k,a,x.c));}
+  }else{
+   if(x.n>1){L.push('');L.push(x.n+'x');}
+   L.push(line(x.d,x.p,x.c));
+   if(x.d2>0)L.push(line(x.d2,x.p2,x.c2));
+   if(x.n>1)L.push('');
+  }
+ });
+ return L.join('\n').replace(/\n{3,}/g,'\n\n').trim();
+}
+async function icuTest(){
+ const c=icuCfg();if(!c.id||!c.key)return toast('Guarda primero tu ID de atleta y tu clave API');
+ try{
+  const r=await fetch('https://intervals.icu/api/v1/athlete/'+encodeURIComponent(c.id),{headers:icuHdr(c.key)});
+  if(r.status===401||r.status===403)return toast('intervals.icu rechaza la clave API o el ID ('+r.status+')');
+  if(!r.ok)return toast('intervals.icu respondió '+r.status);
+  const o=await r.json();toast('Conectado a intervals.icu'+(o&&o.name?': '+o.name:''));
+ }catch(e){toast('No se pudo contactar con intervals.icu desde el navegador ('+(e&&e.message?e.message:e)+'). Puede ser bloqueo CORS o falta de red.');}
+}
+async function icuSend(){
+ const p=S.plan;if(!p)return toast('No hay plan');
+ const c=icuCfg();if(!c.id||!c.key)return toast('Guarda primero tu ID de atleta y tu clave API');
+ const scope=$('#icu-scope').value,t=todayISO();
+ let a,b;
+ if(scope==='week'){a=mondayOf(calRef());b=addDays(a,6);}
+ else if(scope==='next7'){a=t;b=addDays(t,6);}
+ else{a=t;b=addDays(t,13);}
+ const ev=[],ftp=S.profile.ftp;
+ Object.keys(p.sessions).sort().forEach(date=>{
+  if(date<a||date>b)return;
+  p.sessions[date].forEach(s=>{
+   if(!s.segs||!s.segs.length||s.done)return;
+   ev.push({category:'WORKOUT',type:'Ride',start_date_local:date+'T00:00:00',name:s.name,description:toICUText(s,ftp),external_id:'pc-'+s.id});
+  });
+ });
+ if(!ev.length)return toast('No hay entrenos con estructura pendientes en ese rango');
+ try{
+  toast('Enviando '+ev.length+' entrenos…');
+  const r=await fetch('https://intervals.icu/api/v1/athlete/'+encodeURIComponent(c.id)+'/events/bulk?upsert=true',{method:'POST',headers:icuHdr(c.key),body:JSON.stringify(ev)});
+  if(r.status===401||r.status===403)return toast('intervals.icu rechaza la clave API o el ID ('+r.status+')');
+  if(!r.ok){const tx=await r.text().catch(()=>'');return toast('Error de intervals.icu '+r.status+' '+tx.slice(0,120));}
+  toast('✔ '+ev.length+' entrenos enviados a intervals.icu. Sincroniza Garmin Connect y tu Edge.');
+ }catch(e){toast('No se pudo enviar ('+(e&&e.message?e.message:e)+'). Puede ser bloqueo CORS o falta de red.');}
+}
+
 /* ---------- lectura de actividades ---------- */
 function fitVal(dv,pos,type,size,little){
  const t=type&0x1F;
@@ -954,7 +1015,7 @@ const KINDS=[['bike','Entrenamiento en bici'],['fuerza','Fuerza'],['movilidad','
 const DISC={R:'Carretera',G:'Gravel',M:'MTB'};
 const LEVELS={principiante:'Principiante',intermedio:'Intermedio',avanzado:'Avanzado'};
 
-function toast(m){const t=$('#toast');if(!t)return;t.textContent=m;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),2800);}
+function toast(m){const t=$('#toast');if(!t)return;t.textContent=m;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),/conectar|control|Conectada/.test(m)?7000:2800);}
 function showModal(h,cls=''){const m=$('#modal');m.innerHTML=`<div class="mbox ${cls}">${h}</div>`;m.classList.remove('hidden');document.body.classList.add('noscroll');}
 function closeModal(){const m=$('#modal');m.classList.add('hidden');m.innerHTML='';document.body.classList.remove('noscroll');ED=null;}
 function sessKey(s){return s.id;}
@@ -1228,7 +1289,13 @@ function vData(){
  <div class="fg"><label class="f">Alcance<select id="zip-scope"><option value="week">Semana del calendario</option><option value="next7">Próximos 7 días</option><option value="next28">Próximas 4 semanas</option><option value="all">Todo el plan</option></select></label>
  <label class="f">Formato<select id="zip-fmt"><option value="fit">.fit (Garmin Edge)</option><option value="zwo">.zwo (Zwift)</option><option value="erg">.erg (vatios)</option><option value="mrc">.mrc (% FTP)</option></select></label></div>
  <button class="btn pri" data-a="expZIP" ${S.plan?'':'disabled'}>Descargar ZIP</button></div>
- <div class="card"><h3>Zona peligrosa</h3><button class="btn bad" data-a="resetAll">Borrar todos los datos</button></div>`;
+
+ <div class="card"><h3>Enviar a Garmin (vía intervals.icu)</h3><p class="mut sm">Envía los entrenos pendientes a tu calendario de intervals.icu, que los sube a Garmin Connect (activa «Upload planned workouts» en su conexión con Garmin). Después sincroniza Garmin Connect y tu Edge. Los objetivos van en vatios con tu FTP actual de esta app; si cambias el FTP, vuelve a enviar y se actualizan sin duplicarse. intervals.icu solo sube a Garmin la próxima semana más o menos. Tu clave API se guarda solo en este navegador.</p>
+ <div class="fg"><label class="f">ID de atleta<input type="text" id="icu-id" autocomplete="off" placeholder="i12345" value="${esc(icuCfg().id||'')}"></label>
+ <label class="f">Clave API<input type="password" id="icu-key" autocomplete="off" placeholder="${icuCfg().key?'guardada (pega otra para cambiarla)':'pega tu clave'}"></label>
+ <label class="f">Alcance<select id="icu-scope"><option value="week">Semana del calendario</option><option value="next7" selected>Próximos 7 días</option><option value="next14">Próximos 14 días</option></select></label></div>
+ <div class="row"><button class="btn" data-a="icuSaveTest">Guardar y probar</button><button class="btn pri" data-a="icuSend" ${S.plan?'':'disabled'}>Enviar a Garmin</button></div></div>
+  <div class="card"><h3>Zona peligrosa</h3><button class="btn bad" data-a="resetAll">Borrar todos los datos</button></div>`;
 }
 
 /* ---------- ASISTENTE DE PLAN ---------- */
@@ -1603,6 +1670,8 @@ const A={
   if(!files.length)return toast('No hay sesiones con estructura en ese rango');
   download(`entrenos_${fmt}_${a}.zip`,makeZip(files));toast(files.length+' entrenos en el ZIP');
  },
+ icuSaveTest:()=>{const c=icuCfg(),id=$('#icu-id').value.trim(),k=$('#icu-key').value.trim();icuSave({id:id||c.id||'',key:k||c.key||''});icuTest();},
+ icuSend:()=>icuSend(),
  resetAll:()=>{if(confirm('Se borrarán el perfil, eventos, plan y biblioteca personal. ¿Seguro?')){try{localStorage.removeItem(KEY);}catch(e){}S=defState();render();toast('Datos borrados');}},
  /* modo rodillo */
  runClose:()=>runClose(),
@@ -1767,31 +1836,60 @@ function btCmd(bytes,timeout){
  BT.q=BT.q.then(run,run);return BT.q;
 }
 function btSetTarget(w){return btCmd([0x05,w&255,(w>>8)&255],1200);}
+const btWait=ms=>new Promise(r=>setTimeout(r,ms));
+/* ejecuta un paso y, si falla, indica CUÁL (para diagnosticar) */
+async function btStep(name,fn){
+ try{return await fn();}
+ catch(e){const m=(e&&e.message)?e.message:String(e);const err=new Error('['+name+'] '+m);err.name=(e&&e.name)||'Error';err.step=name;throw err;}
+}
 async function btSetup(dev){
+ try{dev.removeEventListener('gattserverdisconnected',btOnDisc);}catch(e){}
  dev.addEventListener('gattserverdisconnected',btOnDisc);
- const srv=await dev.gatt.connect();
- const svc=await srv.getPrimaryService(0x1826);
- BT.ibd=await svc.getCharacteristic(0x2AD2);
- BT.cp=await svc.getCharacteristic(0x2AD9);
+ /* 1) conectar GATT (con reintentos: iOS suele fallar a la primera) */
+ let srv=null,lastErr=null;
+ for(let i=0;i<3&&!srv;i++){
+  try{srv=await btStep('conexión',()=>dev.gatt.connect());}
+  catch(e){lastErr=e;try{dev.gatt.disconnect();}catch(_){}await btWait(700);}
+ }
+ if(!srv)throw lastErr;
+ await btWait(400);
+ /* 2) servicio FTMS (también con reintento) */
+ let svc=null;
+ for(let i=0;i<3&&!svc;i++){
+  try{svc=await btStep('servicio FTMS',()=>srv.getPrimaryService(0x1826));}
+  catch(e){lastErr=e;if(i===2)throw e;await btWait(600);}
+ }
+ /* 3) características */
+ BT.ibd=await btStep('datos 2AD2',()=>svc.getCharacteristic(0x2AD2));
+ BT.cp=await btStep('control 2AD9',()=>svc.getCharacteristic(0x2AD9));
  BT.ibd.addEventListener('characteristicvaluechanged',btOnData);
  BT.cp.addEventListener('characteristicvaluechanged',btOnCp);
- await BT.ibd.startNotifications();
- await BT.cp.startNotifications();
+ /* 4) notificaciones: el punto de control usa INDICATE; si falla no es fatal */
+ let warn='';
+ try{await btStep('notif. datos',()=>BT.ibd.startNotifications());}catch(e){warn+=' Sin datos en vivo ('+e.message+').';}
+ await btWait(300);
+ try{await btStep('notif. control',()=>BT.cp.startNotifications());}catch(e){warn+=' Sin confirmaciones de control ('+e.message+').';}
  BT.dev=dev;BT.connected=true;BT.name=dev.name||'Bici';BT.q=Promise.resolve();BT.lastTarget=null;
+ await btWait(300);
  const code=await btCmd([0x00]);
  if(code!==1&&code!==null)toast('La bici no concede el control de potencia (código '+code+'). Cierra otras apps conectadas a ella.');
- else if(code===null)toast('Conectada, pero no confirma el control ERG. Pruébalo con un tramo corto.');
- else toast('Conectada: '+BT.name);
+ else if(code===null)toast('Conectada, pero no confirma el control ERG.'+warn+' Pruébalo con un tramo corto.');
+ else toast('Conectada: '+BT.name+(warn?'.'+warn:''));
 }
 async function btConnect(){
  if(!btSupported()){toast('Este navegador no soporta Web Bluetooth. Usa Chrome en Android/PC (o Bluefy en iPhone) con la app servida por HTTPS.');return;}
  try{
   if(BT.dev&&!BT.connected){try{await btSetup(BT.dev);btBar();return;}catch(e){/* reintento con selector */}}
-  const dev=await navigator.bluetooth.requestDevice({filters:[{services:[0x1826]}],optionalServices:[0x180D,0x1818]});
+  /* sin filtro de servicio: muchas bicis no anuncian 0x1826 en la publicidad y no salen en la lista */
+  const dev=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:[0x1826,0x180D,0x1818,0x180A]});
   await btSetup(dev);btBar();
  }catch(e){
-  if(e&&e.name==='NotFoundError')return;
-  console.warn(e);toast('No se pudo conectar: '+(e&&e.message?e.message:e));btBar();
+  if(e&&e.name==='NotFoundError'&&!e.step)return;
+  console.warn(e);
+  try{if(BT.dev&&BT.dev.gatt&&BT.dev.gatt.connected)BT.dev.gatt.disconnect();}catch(_){}
+  BT.connected=false;
+  toast('No se pudo conectar: '+(e&&e.message?e.message:e));
+  btBar();
  }
 }
 function btOnDisc(){
