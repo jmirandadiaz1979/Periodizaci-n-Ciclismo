@@ -122,6 +122,14 @@ table.t tr.now td{background:var(--now)}
 .run .ctr{display:flex;gap:10px;justify-content:center;margin-top:14px}
 .run .ctr .btn{font-size:20px;padding:12px 22px}
 .run .zone{border-radius:14px;padding:10px;margin-top:8px;text-align:center}
+.live{display:grid;grid-template-columns:1.45fr 1.1fr .95fr;gap:8px;margin-top:10px}
+.lb{--c:var(--line);border-radius:16px;padding:10px 4px 8px;text-align:center;border:2px solid var(--c);background:color-mix(in srgb,var(--c) 18%,transparent);transition:background .25s,border-color .25s;min-width:0}
+.lb b{display:block;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;color:var(--txt)}
+.lb small{display:block;margin-top:5px;font-size:12px;color:var(--mut);white-space:nowrap}
+.lb-w b{font-size:min(15vw,64px)}.lb-h b{font-size:min(11vw,46px)}.lb-c b{font-size:min(9vw,36px)}
+.btwrap{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:10px}
+.btwrap .r2{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap}
+.btwrap .r2 b{min-width:48px;text-align:center;font-size:18px}
 .runchart{position:relative;margin-top:14px}
 .runchart .cur{position:absolute;top:0;bottom:0;width:2px;background:var(--txt);left:0}
 #print{display:none}
@@ -1549,7 +1557,7 @@ function runOpen(s,ref){
  <div class="mid" id="r-left">0:00</div><div class="nx" id="r-next"></div>
  <div class="bar"><i id="r-bar" style="width:0"></i></div>
  <div class="runchart"><div id="r-chart"></div><div class="cur" id="r-cur"></div></div>
- <div class="c sm mut" id="r-live" style="margin-top:8px"></div><div class="row" id="r-bt" style="justify-content:center;margin-top:8px"></div>
+ <div class="live" id="r-live"><div class="lb lb-w" id="lbW"><b>–</b><small>W</small></div><div class="lb lb-h" id="lbH"><b>–</b><small>lpm</small></div><div class="lb lb-c" id="lbC"><b>–</b><small>rpm</small></div></div><div class="btwrap" id="r-bt"></div>
  <div class="ctr"><button class="btn" data-a="runPrev">⏮</button><button class="btn pri" id="r-play" data-a="runPlay">▶</button><button class="btn" data-a="runNext">⏭</button></div>
  <p class="mut sm c" style="margin-top:10px">Sigue los vatios objetivo en el mando de tu bici (modo vatios fijos / ERG si lo tiene). Pita 3″ antes de cada cambio.</p>`;
  $('#r-chart').innerHTML=chartSVG(steps,{h:90,cls:'big'});
@@ -2017,17 +2025,42 @@ async function btHrConnect(){
 /* ---------- integración con el modo rodillo ---------- */
 function btBar(){
  const el=$('#r-bt');if(!el)return;
- el.innerHTML=`<button class="btn s" data-a="btConn">${BT.connected?'✔ '+esc(BT.name):'🔗 Conectar bici'}</button>
- <button class="btn s" data-a="btHr">${BT.hrOn?'❤ '+esc(BT.hrName):'❤ Pulsómetro'}</button>
- ${BT.connected?`<button class="btn s" data-a="btMinus">−5%</button><b id="r-mult">${Math.round(BT.mult*100)}%</b><button class="btn s" data-a="btPlus">+5%</button><button class="btn s" data-a="btErg">ERG: ${BT.erg?'sí':'no'}</button>`:''}`;
+ el.innerHTML=`<div class="r2"><button class="btn s" data-a="btConn">${BT.connected?'✔ '+esc(BT.name):'🔗 Conectar bici'}</button>
+ <button class="btn s" data-a="btHr">${BT.hrOn?'❤ '+esc(BT.hrName):'❤ Pulsómetro'}</button></div>
+ ${BT.connected?`<div class="r2"><button class="btn s" data-a="btMinus">−5%</button><b id="r-mult">${Math.round(BT.mult*100)}%</b><button class="btn s" data-a="btPlus">+5%</button><button class="btn s" data-a="btErg">ERG: ${BT.erg?'sí':'no'}</button></div>`:''}`;
+}
+const CAD_NORMAL=[70,100],CAD_ROJO=[60,110]; /* rpm: rango normal / límites rojos (si el tramo trae cadencia objetivo se usa ±10 / ±20) */
+const hrZoneOf=bpm=>{const r=bpm/S.profile.lthr;let z=1;for(const h of HZ)if(r>=h[2])z=h[0];return z;};
+function lbSet(id,val,sub,color){
+ const e=$('#'+id);if(!e)return;
+ const b=e.firstElementChild,sm=e.lastElementChild;
+ if(b.textContent!==String(val))b.textContent=val;
+ if(sm.textContent!==sub)sm.textContent=sub;
+ e.style.setProperty('--c',color||'var(--line)');
 }
 function btLive(){
- const el=$('#r-live');if(!el)return;
- if(!BT.connected&&!BT.hrOn){el.textContent='';return;}
- const parts=[];
- if(BT.connected){parts.push(`<b style="color:var(--txt);font-size:20px">${BT.power!=null?BT.power:'–'} W</b>`);parts.push(`${BT.cad!=null?BT.cad:'–'} rpm`);}
- if(BT.hr!=null)parts.push(`${BT.hr} lpm`);
- el.innerHTML='Real: '+parts.join(' · ');
+ if(!$('#lbW'))return;
+ const R=RUN,st=R&&R.steps[R.idx],ftp=S.profile.ftp;
+ /* vatios: verde ±5 %, ámbar ±10 %, rojo más allá (se ignoran los primeros 5 s de cada tramo y las pausas) */
+ const w=BT.connected&&BT.power!=null?BT.power:null;
+ let cw='';
+ if(w!=null&&w>0&&st&&R.running&&R.tStep>5){
+  const p=st.p0+(st.p1-st.p0)*(R.tStep/st.d),tg=p*ftp*((BT.connected&&BT.erg)?BT.mult:1);
+  if(tg>0){const d=Math.abs(w-tg)/tg;cw=d<=.05?'var(--ok)':d<=.10?'var(--warn)':'var(--bad)';}
+ }
+ lbSet('lbW',w!=null?Math.round(w):'–','W',cw);
+ /* pulso: color fijo según zona de FC (sobre FC umbral) */
+ const stale=BT.hrOn&&BT.hrData&&Date.now()-BT.hrData>8000;
+ const hr=BT.hr!=null&&!stale?BT.hr:null;
+ const hz=hr?hrZoneOf(hr):0;
+ lbSet('lbH',hr?Math.round(hr):'–','❤ lpm'+(hz?' · Z'+hz:''),hz?ZC[hz]:'');
+ /* cadencia: neutra; rojo si muy baja o muy alta; ámbar en el borde */
+ const c=BT.connected&&BT.cad!=null?BT.cad:null;
+ let cc='',lo1,lo2,hi1,hi2;
+ if(st&&st.c){lo1=st.c-10;hi1=st.c+10;lo2=st.c-20;hi2=st.c+20;}
+ else{lo1=CAD_NORMAL[0];hi1=CAD_NORMAL[1];lo2=CAD_ROJO[0];hi2=CAD_ROJO[1];}
+ if(c!=null&&c>0){cc=(c<lo2||c>hi2)?'var(--bad)':(c<lo1||c>hi1)?'var(--warn)':'';}
+ lbSet('lbC',c!=null?Math.round(c):'–','rpm'+(st&&st.c?' · obj '+st.c:''),cc);
 }
 function btRunStart(){
  if(!BT.connected)return;
