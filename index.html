@@ -5,13 +5,28 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0b0f17">
 <title>Periodización Ciclismo</title>
+<script>
+(function(){
+ var K='pc_theme';
+ function cfg(){try{var c=JSON.parse(localStorage.getItem(K)||'{}')||{};return{mode:c.mode||'auto',light:c.light||'07:30',dark:c.dark||'20:00'};}catch(e){return{mode:'auto',light:'07:30',dark:'20:00'};}}
+ function mins(t){var p=String(t).split(':');return(+p[0]||0)*60+(+p[1]||0);}
+ function eff(){var c=cfg();if(c.mode==='light'||c.mode==='dark')return c.mode;var d=new Date(),m=d.getHours()*60+d.getMinutes(),a=mins(c.light),b=mins(c.dark);return(a<b?(m>=a&&m<b):(m>=a||m<b))?'light':'dark';}
+ function apply(){var t=eff();document.documentElement.setAttribute('data-theme',t);var m=document.querySelector('meta[name=theme-color]');if(m)m.setAttribute('content',t==='light'?'#f2f4f8':'#0b0f17');}
+ window.themeCfg=cfg;
+ window.themeSave=function(c){try{localStorage.setItem(K,JSON.stringify(c));}catch(e){}apply();};
+ apply();setInterval(apply,60000);
+ document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')apply();});
+ document.addEventListener('change',function(e){var t=e.target;if(t&&t.classList&&t.classList.contains('thm')){var g=function(id){var x=document.getElementById(id);return x?x.value:'';};themeSave({mode:g('thm-mode')||'auto',light:g('thm-light')||'07:30',dark:g('thm-dark')||'20:00'});}});
+})();
+</script>
 <style>
-:root{--bg:#0b0f17;--card:#141c2b;--card2:#1a2438;--line:#26334d;--txt:#e7ecf6;--mut:#8f9bb3;--acc:#38bdf8;--ok:#22c55e;--warn:#f59e0b;--bad:#ef4444;--r:12px}
+:root{color-scheme:dark;--bg:#0b0f17;--card:#141c2b;--card2:#1a2438;--line:#3a4c72;--txt:#f4f7fd;--mut:#bcc8de;--acc:#38bdf8;--acc-ink:#04202e;--ok:#34d399;--warn:#fbbf24;--bad:#f87171;--inset:var(--inset);--hov:#1f2d47;--now:#1b3a5c;--over:#24406a;--rowline:#27375a;--tagbg:#2a3b60;--tagtx:#e8eefb;--topbg:rgba(11,15,23,.94);--runbg:#070a10;--badbd:#7a3040;--badtx:#fecaca;--r:12px}
+:root[data-theme=light]{color-scheme:light;--bg:#f2f4f8;--card:#ffffff;--card2:#eef2f8;--line:#aab6cc;--txt:#0b1220;--mut:#37445a;--acc:#0369a1;--acc-ink:#ffffff;--ok:#15803d;--warn:#b45309;--bad:#b91c1c;--inset:#e5eaf3;--hov:#e3eaf6;--now:#d3e6fa;--over:#cde1f8;--rowline:#d3dae8;--tagbg:#dbe3f1;--tagtx:#16223b;--topbg:rgba(242,244,248,.94);--runbg:#ffffff;--badbd:#e2a9a9;--badtx:#991b1b}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+html,body{margin:0;background:var(--bg);color:var(--txt);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 body.noscroll{overflow:hidden}
 .hidden{display:none!important}
-.top{position:sticky;top:0;z-index:20;background:rgba(11,15,23,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:calc(env(safe-area-inset-top) + 8px) 12px 0}
+.top{position:sticky;top:0;z-index:20;background:var(--topbg);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:calc(env(safe-area-inset-top) + 8px) 12px 0}
 .brand{font-weight:800;letter-spacing:.08em;font-size:13px;padding:0 2px 6px;color:var(--mut)}
 .brand span{color:var(--acc)}
 #nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
@@ -26,54 +41,54 @@ h2{font-size:17px}h3{font-size:15px}
 .grid{display:grid;gap:12px}
 .g2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
 .g4{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
-.mut{color:var(--mut)}.sm{font-size:12px}.b{font-weight:700}.r{text-align:right}.c{text-align:center}
+.mut{color:var(--mut)}.sm{font-size:13px}.b{font-weight:700}.r{text-align:right}.c{text-align:center}
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .sp{flex:1}
 .kpi{background:var(--card2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 .kpi b{display:block;font-size:22px;line-height:1.15}
-.kpi span{font-size:12px;color:var(--mut)}
+.kpi span{font-size:13px;color:var(--mut)}
 .btn{background:var(--card2);border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:8px 12px;font-weight:600;font-size:14px;font-family:inherit;cursor:pointer}
 .btn:hover{border-color:var(--acc)}
-.btn.pri{background:var(--acc);border-color:var(--acc);color:#04202e}
-.btn.bad{border-color:#5b2430;color:#fca5a5}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
+.btn.bad{border-color:var(--badbd);color:var(--badtx)}
 .btn.s{padding:5px 9px;font-size:13px}
 .btn:disabled{opacity:.5}
-input,select,textarea{background:#0e1523;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px 10px;font:inherit;width:100%;min-width:0}
+input,select,textarea{background:var(--inset);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px 10px;font:inherit;width:100%;min-width:0}
 input[type=checkbox]{width:auto}
 textarea{resize:vertical}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--acc)}
-label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--mut)}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--mut)}
 label.chk{display:flex;gap:8px;align-items:center;font-size:14px;color:var(--txt)}
 .fg{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:10px}
 .days7{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
 .days7 label{align-items:center;text-align:center}
-.tag{display:inline-block;font-size:11px;font-weight:700;border-radius:6px;padding:2px 7px;background:#22304a;color:#c7d2e6}
+.tag{display:inline-block;font-size:12px;font-weight:700;border-radius:6px;padding:2px 7px;background:var(--tagbg);color:var(--tagtx)}
 table.t{width:100%;border-collapse:collapse;font-size:14px}
-table.t th{text-align:left;color:var(--mut);font-weight:600;font-size:12px;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
-table.t td{padding:7px 8px;border-bottom:1px solid #1b263b;vertical-align:middle}
-table.t tr.clk{cursor:pointer}table.t tr.clk:hover td{background:#18233a}
-table.t tr.now td{background:#16304a}
+table.t th{text-align:left;color:var(--mut);font-weight:600;font-size:13px;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.t td{padding:7px 8px;border-bottom:1px solid var(--rowline);vertical-align:middle}
+table.t tr.clk{cursor:pointer}table.t tr.clk:hover td{background:var(--hov)}
+table.t tr.now td{background:var(--now)}
 .scroll{overflow-x:auto}
-.bar{height:8px;background:#0e1523;border-radius:6px;overflow:hidden}
+.bar{height:8px;background:var(--inset);border-radius:6px;overflow:hidden}
 .bar i{display:block;height:100%;background:var(--acc)}
-.wchart{display:block;width:100%;height:60px;background:#0e1523;border-radius:8px}
+.wchart{display:block;width:100%;height:60px;background:var(--inset);border-radius:8px}
 .wchart.big{height:110px}
 .sess{display:grid;grid-template-columns:110px 1fr auto;gap:10px;align-items:center;padding:8px;border:1px solid var(--line);border-left:4px solid var(--c,#3b82f6);border-radius:10px;background:var(--card2);margin-top:8px}
 .sess .nm{font-weight:700;cursor:pointer}
-.sess.done{opacity:.72}.sess.done .nm::before{content:"✓ ";color:var(--ok)}
+.sess.done{opacity:.9}.sess.done .nm::before{content:"✓ ";color:var(--ok)}
 .sess .wchart{height:42px}
-.pc text{fill:var(--mut);font-size:10px}
-.pc .lbl{fill:#e7ecf6;font-size:10px;font-weight:700}
-.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin-top:6px}
+.pc text{fill:var(--mut);font-size:11px}
+.pc .lbl{fill:var(--txt);font-size:10px;font-weight:700}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--mut);margin-top:6px}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
 /* calendario */
 .mg{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
-.mg .dh{font-size:11px;color:var(--mut);text-align:center;padding:2px 0}
+.mg .dh{font-size:12px;color:var(--mut);text-align:center;padding:2px 0}
 .cell{min-height:96px;background:var(--card2);border:1px solid var(--line);border-top:3px solid var(--ph,var(--line));border-radius:8px;padding:3px;overflow:hidden}
-.cell.dim{opacity:.45}.cell.today{outline:2px solid var(--acc)}.cell.over{background:#1d3150}
-.cell .cn{font-size:12px;color:var(--mut);cursor:pointer;display:flex;justify-content:space-between}
-.chip{font-size:11px;line-height:1.2;background:#0e1523;border-left:3px solid var(--c,#3b82f6);border-radius:4px;padding:3px 4px;margin-top:3px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.chip.done{opacity:.6;text-decoration:line-through}
+.cell.dim{opacity:.62}.cell.today{outline:2px solid var(--acc)}.cell.over{background:var(--over)}
+.cell .cn{font-size:13px;color:var(--mut);cursor:pointer;display:flex;justify-content:space-between}
+.chip{font-size:12px;line-height:1.2;background:var(--inset);border-left:3px solid var(--c,#3b82f6);border-radius:4px;padding:3px 4px;margin-top:3px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip.done{opacity:.8;text-decoration:line-through}
 .day{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px}
 .day.today{border-color:var(--acc)}
 .day .dh2{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -89,17 +104,17 @@ table.t tr.now td{background:#16304a}
 .seg .sh select{width:auto}
 .seg .sb{display:flex;gap:4px}
 .seg .sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:8px}
-.wh{font-style:normal;font-size:11px;color:var(--acc)}
+.wh{font-style:normal;font-size:12px;color:var(--acc)}
 .zt{display:flex;align-items:center;gap:8px}
 .zt i{width:12px;height:12px;border-radius:3px;display:inline-block}
 .sb2{position:fixed;left:50%;bottom:18px;transform:translateX(-50%)}
-#toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,40px);background:#0e1523;border:1px solid var(--acc);color:var(--txt);padding:10px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:.25s;z-index:90;max-width:90vw;font-size:14px}
+#toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,40px);background:var(--inset);border:1px solid var(--acc);color:var(--txt);padding:10px 16px;border-radius:10px;opacity:0;pointer-events:none;transition:.25s;z-index:90;max-width:90vw;font-size:14px}
 #toast.show{opacity:1;transform:translate(-50%,0)}
-.warn{color:var(--warn)}.err{color:#fca5a5}
+.warn{color:var(--warn)}.err{color:var(--badtx)}
 .hero{text-align:center;padding:28px 16px}
 .hero p{color:var(--mut);max-width:560px;margin:8px auto 16px}
 /* runner */
-.run{position:fixed;inset:0;background:#070a10;z-index:80;display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top) + 12px) 14px 18px}
+.run{position:fixed;inset:0;background:var(--runbg);z-index:80;display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top) + 12px) 14px 18px}
 .run .rt{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .run .big{font-size:min(26vw,170px);font-weight:800;line-height:1;text-align:center;margin:10px 0 0;font-variant-numeric:tabular-nums}
 .run .mid{font-size:min(14vw,80px);font-weight:700;text-align:center;font-variant-numeric:tabular-nums}
@@ -108,10 +123,10 @@ table.t tr.now td{background:#16304a}
 .run .ctr .btn{font-size:20px;padding:12px 22px}
 .run .zone{border-radius:14px;padding:10px;margin-top:8px;text-align:center}
 .runchart{position:relative;margin-top:14px}
-.runchart .cur{position:absolute;top:0;bottom:0;width:2px;background:#fff;left:0}
+.runchart .cur{position:absolute;top:0;bottom:0;width:2px;background:var(--txt);left:0}
 #print{display:none}
 @media (max-width:640px){
- .cell{min-height:70px}.chip{font-size:10px;padding:2px 3px}
+ .cell{min-height:70px}.chip{font-size:11px;padding:2px 3px}
  .sess{grid-template-columns:80px 1fr}.sess .acts{grid-column:1/-1}
  .days7{gap:3px}
 }
@@ -269,7 +284,7 @@ function chartSVG(steps,o={}){
   x+=w;
  }
  const yf=H-1/mx*H;
- h+=`<line x1="0" x2="${W}" y1="${yf.toFixed(1)}" y2="${yf.toFixed(1)}" stroke="rgba(255,255,255,.35)" stroke-dasharray="4 4" stroke-width="1" vector-effect="non-scaling-stroke"/>`;
+ h+=`<line x1="0" x2="${W}" y1="${yf.toFixed(1)}" y2="${yf.toFixed(1)}" stroke="var(--txt)" stroke-opacity=".5" stroke-dasharray="4 4" stroke-width="1" vector-effect="non-scaling-stroke"/>`;
  return`<svg class="wchart ${o.cls||''}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${h}</svg>`;
 }
 
@@ -863,7 +878,8 @@ async function icuSend(){
   if(date<a||date>b)return;
   p.sessions[date].forEach(s=>{
    if(!s.segs||!s.segs.length||s.done)return;
-   ev.push({category:'WORKOUT',type:'Ride',start_date_local:date+'T00:00:00',name:s.name,description:toICUText(s,ftp),external_id:'pc-'+s.id});
+   if(($('#icu-fmt')||{}).value==='zwo')ev.push({category:'WORKOUT',type:'Ride',start_date_local:date+'T00:00:00',name:s.name,filename:safeName(s.name)+'.zwo',file_contents:toZWO(s),external_id:'pc-'+s.id});
+   else ev.push({category:'WORKOUT',type:'Ride',start_date_local:date+'T00:00:00',name:s.name,description:toICUText(s,ftp),external_id:'pc-'+s.id});
   });
  });
  if(!ev.length)return toast('No hay entrenos con estructura pendientes en ese rango');
@@ -874,6 +890,63 @@ async function icuSend(){
   if(!r.ok){const tx=await r.text().catch(()=>'');return toast('Error de intervals.icu '+r.status+' '+tx.slice(0,120));}
   toast('✔ '+ev.length+' entrenos enviados a intervals.icu. Sincroniza Garmin Connect y tu Edge.');
  }catch(e){toast('No se pudo enviar ('+(e&&e.message?e.message:e)+'). Puede ser bloqueo CORS o falta de red.');}
+}
+
+/* ---- traer actividades reales desde intervals.icu (Garmin Connect -> intervals.icu -> app) ---- */
+const ICU_LAST='pc_icu_last';
+function icuToA(x){
+ const dur=Math.round(x.moving_time||x.elapsed_time||0);
+ const avgP=+(x.icu_average_watts||x.average_watts||0);
+ const np=+(x.icu_weighted_avg_watts||x.icu_normalized_watts||avgP);
+ const hr=+(x.average_heartrate||0)||null,cad=+(x.average_cadence||0)||null;
+ const hasPower=avgP>0,ftp=S.profile.ftp;
+ let tss;
+ if(hasPower)tss=dur*Math.pow(np/ftp,2)/3600*100;
+ else if(hr)tss=dur*Math.pow(hr/S.profile.lthr,2)/3600*100;
+ else tss=+(x.icu_training_load||0);
+ const start=Math.round(Date.parse(x.start_date||x.start_date_local)/1000);
+ return{start,date:(x.start_date_local||'').slice(0,10)||iso(new Date(start*1000)),dur,avgP,np,maxP:0,kj:avgP*dur/1000,hr,cad,tss,hasPower};
+}
+let icuBusy=false;
+async function icuSync(manual){
+ const c=icuCfg();
+ if(!c.id||!c.key){if(manual)toast('Guarda primero tu ID de atleta y tu clave API (pestaña Datos)');return;}
+ if(!S.plan){if(manual)toast('Crea primero un plan');return;}
+ if(icuBusy)return;icuBusy=true;
+ try{
+  const t=todayISO(),from=addDays(t,-14);
+  const r=await fetch('https://intervals.icu/api/v1/athlete/'+encodeURIComponent(c.id)+'/activities?oldest='+from+'&newest='+t,{headers:icuHdr(c.key)});
+  if(r.status===401||r.status===403){if(manual)toast('intervals.icu rechaza la clave API o el ID ('+r.status+')');return;}
+  if(!r.ok){if(manual)toast('intervals.icu respondió '+r.status);return;}
+  const list=await r.json();
+  const res={match:0,new:0,skip:0};
+  const ids=new Set();
+  Object.keys(S.plan.sessions).forEach(d=>S.plan.sessions[d].forEach(s=>{if(s.act&&s.act.icuId)ids.add(String(s.act.icuId));}));
+  (Array.isArray(list)?list:[]).sort((a,b)=>String(a.start_date_local).localeCompare(String(b.start_date_local))).forEach(x=>{
+   if(!x||!x.id||!/Ride|Cycling/i.test(x.type||'')||(x.moving_time||0)<300||ids.has(String(x.id))){res.skip++;return;}
+   const a=icuToA(x);
+   if(!a.dur||isNaN(a.start)){res.skip++;return;}
+   /* ya importada por archivo (inicio a menos de 5 min) */
+   const dupFile=Object.keys(S.plan.sessions).some(d=>S.plan.sessions[d].some(s=>s.act&&s.act.key&&Math.abs(parseInt(s.act.key,10)-a.start)<300));
+   if(dupFile){res.skip++;return;}
+   const out=placeActivity(a,'intervals.icu');
+   if(out==='match'||out==='new'){
+    res[out]++;
+    const key=a.start+'_'+a.dur;
+    Object.keys(S.plan.sessions).forEach(d=>S.plan.sessions[d].forEach(s=>{if(s.act&&s.act.key===key){s.act.icuId=String(x.id);s.act.txt='Traído de intervals.icu'+(x.name?': '+x.name:'')+(a.hasPower?'':' (TSS estimado por FC)');}}));
+   }else res.skip++;
+  });
+  try{localStorage.setItem(ICU_LAST,String(Date.now()));}catch(e){}
+  if(res.match+res.new){save();render();toast('⟳ intervals.icu: '+(res.match+res.new)+' actividad(es) nueva(s): '+res.match+' emparejada(s) con el plan, '+res.new+' nueva(s)');}
+  else if(manual)toast('intervals.icu: no hay actividades nuevas de los últimos 14 días');
+ }catch(e){if(manual)toast('No se pudo contactar con intervals.icu ('+(e&&e.message?e.message:e)+')');}
+ finally{icuBusy=false;}
+}
+function icuAuto(){
+ const c=icuCfg();if(!c.id||!c.key||!S.plan)return;
+ let last=0;try{last=+localStorage.getItem(ICU_LAST)||0;}catch(e){}
+ if(Date.now()-last<5*60*1000)return;
+ icuSync(false);
 }
 
 /* ---------- lectura de actividades ---------- */
@@ -1112,7 +1185,7 @@ function planChart(p,agg,ser){
   i=j+1;}
  /* barras */
  const ys=v=>barBot-v/maxT*(barBot-barTop);
- for(let k=0;k<=2;k++){const v=maxT/1.1*k/2,y=ys(v);h+=`<line x1="${left}" x2="${W-6}" y1="${y}" y2="${y}" stroke="#25324b" stroke-dasharray="2 4"/><text x="${left-4}" y="${y+3}" text-anchor="end">${Math.round(v)}</text>`;}
+ for(let k=0;k<=2;k++){const v=maxT/1.1*k/2,y=ys(v);h+=`<line x1="${left}" x2="${W-6}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-dasharray="2 4"/><text x="${left-4}" y="${y+3}" text-anchor="end">${Math.round(v)}</text>`;}
  p.weeks.forEach((w,k)=>{
   const a=agg[k],x=left+k*cw+3,bw=cw-6,y=ys(a.tss);
   h+=`<rect x="${x}" y="${y}" width="${bw}" height="${Math.max(0,barBot-y)}" rx="3" fill="${WT_COL[w.type]||'#3b82f6'}" opacity=".85"><title>Semana ${k+1} · ${Math.round(a.tss)} TSS · ${fmtH(a.dur/3600)} h</title></rect>`;
@@ -1128,14 +1201,14 @@ function planChart(p,agg,ser){
  const yt=v=>tsbBot-(v-tmin)/(tmax-tmin)*(tsbBot-tsbTop);
  h+=`<text x="${left}" y="${tsbTop-6}" style="font-size:10px">TSB (CTL − ATL)</text>`;
  h+=`<rect x="${left}" y="${yt(25)}" width="${W-left-6}" height="${Math.max(0,yt(5)-yt(25))}" fill="#22c55e" opacity=".10"/>`;
- h+=`<line x1="${left}" x2="${W-6}" y1="${yt(0)}" y2="${yt(0)}" stroke="#8f9bb3" stroke-width=".8"/><text x="${left-4}" y="${yt(0)+3}" text-anchor="end">0</text>`;
+ h+=`<line x1="${left}" x2="${W-6}" y1="${yt(0)}" y2="${yt(0)}" stroke="var(--mut)" stroke-width=".8"/><text x="${left-4}" y="${yt(0)+3}" text-anchor="end">0</text>`;
  h+=`<polyline fill="none" stroke="#a78bfa" stroke-width="1.8" points="${ser.map((x,k)=>`${xs(k).toFixed(1)},${yt(x.tsb).toFixed(1)}`).join(' ')}"/>`;
  /* hoy */
  const t=todayISO(),ti=diffDays(p.start,t);
- if(ti>=0&&ti<n*7){const x=xs(ti);h+=`<line x1="${x}" x2="${x}" y1="${phH}" y2="${tsbBot}" stroke="#fff" stroke-dasharray="4 3" opacity=".6"/><text x="${x+3}" y="${phH+10}" style="fill:#fff">hoy</text>`;}
+ if(ti>=0&&ti<n*7){const x=xs(ti);h+=`<line x1="${x}" x2="${x}" y1="${phH}" y2="${tsbBot}" stroke="var(--txt)" stroke-dasharray="4 3" opacity=".6"/><text x="${x+3}" y="${phH+10}" style="fill:var(--txt)">hoy</text>`;}
  /* evento */
  const ei=diffDays(p.start,p.end);
- if(ei>=0&&ei<n*7+7){const x=xs(ei);h+=`<line x1="${x}" x2="${x}" y1="${phH}" y2="${tsbBot}" stroke="#eab308" stroke-dasharray="4 3"/><text x="${x-4}" y="${phH+10}" text-anchor="end" style="fill:#eab308">evento</text>`;}
+ if(ei>=0&&ei<n*7+7){const x=xs(ei);h+=`<line x1="${x}" x2="${x}" y1="${phH}" y2="${tsbBot}" stroke="var(--warn)" stroke-dasharray="4 3"/><text x="${x-4}" y="${phH+10}" text-anchor="end" style="fill:var(--warn)">evento</text>`;}
  return`<div class="scroll"><svg class="pc" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">${h}</svg></div>
  <div class="legend"><span><i style="background:#3b82f6"></i>Carga</span><span><i style="background:#64748b"></i>Descarga</span><span><i style="background:#22c55e"></i>Puesta a punto</span><span><i style="background:#eab308"></i>Carrera</span><span><i style="background:#38bdf8"></i>CTL (forma)</span><span><i style="background:#f87171"></i>ATL (fatiga)</span><span><i style="background:#a78bfa"></i>TSB</span><span><i style="background:#fff"></i>TSS hecho</span></div>`;
 }
@@ -1169,6 +1242,7 @@ function vCal(){
  const head=`<div class="row" style="margin-bottom:12px">
   <button class="btn s" data-a="calPrev">‹</button><button class="btn s" data-a="calToday">Hoy</button><button class="btn s" data-a="calNext">›</button>
   <b>${mode==='month'?`${MES[parseD(ref).getMonth()]} ${parseD(ref).getFullYear()}`:`${fmtDate(mondayOf(ref))} – ${fmtDate(addDays(mondayOf(ref),6),true)}`}</b><div class="sp"></div>
+  ${icuCfg().id&&icuCfg().key?'<button class="btn s" data-a="icuSync" title="Traer actividades de intervals.icu">⟳ intervals</button>':''}
   <label class="btn s" style="cursor:pointer">⬆ Importar real<input type="file" class="impAct" accept=".fit,.tcx" multiple style="display:none"></label>
   <button class="btn s ${mode==='week'?'pri':''}" data-a="calMode" data-m="week">Semana</button><button class="btn s ${mode==='month'?'pri':''}" data-a="calMode" data-m="month">Mes</button></div>`;
  return head+(mode==='month'?calMonth(ref):calWeek(ref));
@@ -1282,7 +1356,7 @@ function vData(){
  <div class="row"><button class="btn pri" data-a="expJSON">Exportar JSON</button><label class="btn" style="cursor:pointer">Importar JSON<input type="file" id="imp" accept=".json,application/json" style="display:none"></label></div></div>
  <div class="card"><h3>Control de la bici por Bluetooth</h3><p class="mut sm">En ▶ Rodillo pulsa <b>Conectar bici</b>: la app fija la potencia objetivo de cada tramo (modo ERG, vía Bluetooth FTMS), registra potencia, cadencia y FC reales, y al terminar guarda el resultado en la sesión o lo descarga como .tcx. Con −5% / +5% ajustas la intensidad al vuelo. Requisitos: Chrome o Edge en Android/PC (en iPhone Safari no funciona; hace falta un navegador con Web Bluetooth como Bluefy), la app servida por HTTPS y la bici con Bluetooth FTMS activado. El Bluetooth de la bici es de uno a uno: ciérrala en otras apps (Bkool, BestCycling) antes de conectarla aquí. El Garmin por ANT+ no interfiere.</p></div>
  <div class="card"><h3>Importar entrenos reales</h3><p class="mut sm">Sube tus actividades (.fit o .tcx, varias a la vez) desde Garmin Connect, Bkool o BestCycling. Se emparejan con la sesión planificada de ese día y se marcan como hechas con duración, NP, FC y TSS reales. Si no hay sesión ese día se crea una nueva. Si el archivo no trae potencia, el TSS se estima por FC.</p>
- <label class="btn pri" style="cursor:pointer;display:inline-block">Importar .fit / .tcx<input type="file" class="impAct" accept=".fit,.tcx" multiple style="display:none"></label></div>
+ <button class="btn" data-a="icuSync" style="margin-right:8px">⟳ Traer de intervals.icu</button><label class="btn pri" style="cursor:pointer;display:inline-block">Importar .fit / .tcx<input type="file" class="impAct" accept=".fit,.tcx" multiple style="display:none"></label></div>
  <div class="card"><h3>Calendario y PDF</h3><p class="mut sm">Un evento de día completo por sesión (.ics) para tu calendario del móvil. El PDF se genera desde el diálogo de impresión.</p>
  <div class="row"><button class="btn" data-a="expICS" ${S.plan?'':'disabled'}>Exportar .ics</button><button class="btn" data-a="printPlan" ${S.plan?'':'disabled'}>Imprimir / PDF del plan</button></div></div></div>
  <div class="card"><h3>Entrenos para el rodillo</h3><p class="mut sm">Exporta las sesiones con estructura (un ZIP con un archivo por sesión). <b>.fit</b>: Garmin Edge. Conecta el ciclocomputador por USB y copia los archivos en <code>Garmin/NewFiles</code>; después aparecen en Entrenamiento → Entrenos. Las rampas se parten en escalones y los objetivos van en vatios con tu FTP actual (vuelve a exportar si cambias el FTP). <b>.zwo</b>, <b>.erg</b> (vatios) y <b>.mrc</b> (% FTP) son los formatos habituales de apps de rodillo; comprueba con una sesión de prueba cuáles acepta tu app.</p>
@@ -1290,9 +1364,14 @@ function vData(){
  <label class="f">Formato<select id="zip-fmt"><option value="fit">.fit (Garmin Edge)</option><option value="zwo">.zwo (Zwift)</option><option value="erg">.erg (vatios)</option><option value="mrc">.mrc (% FTP)</option></select></label></div>
  <button class="btn pri" data-a="expZIP" ${S.plan?'':'disabled'}>Descargar ZIP</button></div>
 
+ <div class="card"><h3>Apariencia</h3><p class="mut sm">En automático la app cambia sola entre claro (de día) y oscuro (de noche) según las horas que elijas.</p>
+ <div class="fg"><label class="f">Modo<select id="thm-mode" class="thm">${[['auto','Automático (día/noche)'],['light','Siempre claro'],['dark','Siempre oscuro']].map(o=>`<option value="${o[0]}"${themeCfg().mode===o[0]?' selected':''}>${o[1]}</option>`).join('')}</select></label>
+ <label class="f">Claro desde<input type="time" id="thm-light" class="thm" value="${themeCfg().light}"></label>
+ <label class="f">Oscuro desde<input type="time" id="thm-dark" class="thm" value="${themeCfg().dark}"></label></div></div>
  <div class="card"><h3>Enviar a Garmin (vía intervals.icu)</h3><p class="mut sm">Envía los entrenos pendientes a tu calendario de intervals.icu, que los sube a Garmin Connect (activa «Upload planned workouts» en su conexión con Garmin). Después sincroniza Garmin Connect y tu Edge. Los objetivos van en vatios con tu FTP actual de esta app; si cambias el FTP, vuelve a enviar y se actualizan sin duplicarse. intervals.icu solo sube a Garmin la próxima semana más o menos. Tu clave API se guarda solo en este navegador.</p>
  <div class="fg"><label class="f">ID de atleta<input type="text" id="icu-id" autocomplete="off" placeholder="i12345" value="${esc(icuCfg().id||'')}"></label>
  <label class="f">Clave API<input type="password" id="icu-key" autocomplete="off" placeholder="${icuCfg().key?'guardada (pega otra para cambiarla)':'pega tu clave'}"></label>
+ <label class="f">Formato de envío<select id="icu-fmt"><option value="text">Texto de intervals.icu (vatios)</option><option value="zwo">Archivo ZWO (% de FTP)</option></select></label>
  <label class="f">Alcance<select id="icu-scope"><option value="week">Semana del calendario</option><option value="next7" selected>Próximos 7 días</option><option value="next14">Próximos 14 días</option></select></label></div>
  <div class="row"><button class="btn" data-a="icuSaveTest">Guardar y probar</button><button class="btn pri" data-a="icuSend" ${S.plan?'':'disabled'}>Enviar a Garmin</button></div></div>
   <div class="card"><h3>Zona peligrosa</h3><button class="btn bad" data-a="resetAll">Borrar todos los datos</button></div>`;
@@ -1672,6 +1751,7 @@ const A={
  },
  icuSaveTest:()=>{const c=icuCfg(),id=$('#icu-id').value.trim(),k=$('#icu-key').value.trim();icuSave({id:id||c.id||'',key:k||c.key||''});icuTest();},
  icuSend:()=>icuSend(),
+ icuSync:()=>icuSync(true),
  resetAll:()=>{if(confirm('Se borrarán el perfil, eventos, plan y biblioteca personal. ¿Seguro?')){try{localStorage.removeItem(KEY);}catch(e){}S=defState();render();toast('Datos borrados');}},
  /* modo rodillo */
  runClose:()=>runClose(),
@@ -1784,6 +1864,8 @@ document.addEventListener('dragend',()=>$$('.over').forEach(x=>x.classList.remov
 /* ============ ARRANQUE ============ */
 load();
 render();
+icuAuto();
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')icuAuto();});
 
 /* =====================================================================
    BLUETOOTH (Web Bluetooth + FTMS): control ERG de la bici y registro real
