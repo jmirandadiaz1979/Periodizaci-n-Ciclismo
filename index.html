@@ -1958,12 +1958,29 @@ async function btSetup(dev){
  else if(code===null)toast('Conectada, pero no confirma el control ERG.'+warn+' Pruébalo con un tramo corto.');
  else toast('Conectada: '+BT.name+(warn?'.'+warn:''));
 }
+/* selector de dispositivo: prueba varias formas porque cada navegador Bluetooth admite opciones distintas */
+async function btPick(){
+ const tries=[
+  ['FTMS',{filters:[{services:[0x1826]}]}],
+  ['nombre',{filters:[{namePrefix:'Zycle'}],optionalServices:[0x1826]}],
+  ['todos',{acceptAllDevices:true,optionalServices:[0x1826]}]
+ ];
+ const errs=[];
+ for(let i=0;i<tries.length;i++){
+  try{return await navigator.bluetooth.requestDevice(tries[i][1]);}
+  catch(e){
+   if(e&&e.name==='NotFoundError')return null; /* cerró el selector o no hay bici */
+   errs.push(tries[i][0]+': '+((e&&e.name&&e.name!=='Error')?e.name+' ':'')+((e&&e.message)?e.message:e));
+  }
+ }
+ const err=new Error('[buscar bici] '+errs.join(' | '));err.step='buscar';throw err;
+}
 async function btConnect(){
  if(!btSupported()){toast('Este navegador no soporta Web Bluetooth. Usa Chrome en Android/PC (o Bluefy en iPhone) con la app servida por HTTPS.');return;}
  try{
   if(BT.dev&&!BT.connected){try{await btSetup(BT.dev);btBar();return;}catch(e){/* reintento con selector */}}
-  /* sin filtro de servicio: muchas bicis no anuncian 0x1826 en la publicidad y no salen en la lista */
-  const dev=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:[0x1826,0x180D,0x1818,0x180A]});
+  const dev=await btPick();
+  if(!dev)return;
   await btSetup(dev);btBar();
  }catch(e){
   if(e&&e.name==='NotFoundError'&&!e.step)return;
